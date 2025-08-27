@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  points:
+    image: postgres:16
+    container_name: points
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network   # <- adicionei aqui
+
+  spring-app:
+    build: .
+    container_name: spring-app-new
+    depends_on:
+      - points
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://points:5432/mydatabase
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
