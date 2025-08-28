@@ -1,11 +1,32 @@
-FROM openjdk:21
+# Etapa 1: Build
+FROM eclipse-temurin:21-jdk-alpine AS build
 
 WORKDIR /app
 
-COPY . /app
+# Copia os arquivos do projeto
+COPY pom.xml .
+COPY src ./src
+COPY mvnw .
+COPY .mvn .mvn
+COPY mvnw.cmd .
 
-RUN ./mvnw -B clean package -DskipTests
+# Compila o projeto e cria o .jar
+# Para Maven:
+RUN chmod +x mvnw && ./mvnw clean package -DskipTests
 
+# Renomeia o JAR gerado para um nome padrão
+RUN cp target/*.jar app.jar
+
+# Etapa 2: Imagem final
+FROM eclipse-temurin:21.0.1_12-jre-alpine
+
+WORKDIR /app
+
+# Copia apenas o .jar da etapa anterior
+COPY --from=build /app/app.jar .
+
+# Porta padrão do Spring Boot
 EXPOSE 8081
 
-CMD ["java", "-jar", "target/apiBatePonto-0.0.1-SNAPSHOT.jar"]
+# Comando de execução
+ENTRYPOINT ["java", "-jar", "app.jar"]
